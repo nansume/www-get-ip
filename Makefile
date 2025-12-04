@@ -11,7 +11,7 @@ install:
 	sed "s| timeout 2 | timeout 10 |" -i $(DESTDIR)$(PREFIX)/bin/www-get-ip
 
 check:
-  ./tests/test-myip-urls.sh
+	./tests/test-myip-urls.sh
 
 clean:
 	rm -f www-get-ip.sh
