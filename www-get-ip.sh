@@ -56,7 +56,7 @@ while [ x"${1-}" != x ]; do
   shift
 done
 [ -n "${confarg}" ] || confarg="/etc/getip-url.conf"
-[ -s "${confarg}" ] || [ -n "${url}" ] || { printf '%s\n' "${confarg}: not found... error" >&2; exit;}
+[ -s "${confarg}" ] || [ -n "${g_url}" ] || { printf '%s\n' "${confarg}: not found... error" >&2; exit;}
 
 
 loadfile() {
