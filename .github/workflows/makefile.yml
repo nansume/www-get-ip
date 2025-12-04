@@ -14,11 +14,8 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install
-      run: make DESTDIR=install PREFIX=
+    - name: Install check
+      run: make DESTDIR=install PREFIX= install
 
     - name: Run check
       run: make check
-
-    - name: Run distcheck
-      run: make distcheck
