@@ -6,9 +6,12 @@ install:
 	install -Dbvm 644 getip-url.conf $(DESTDIR)/etc/getip-url.conf
 	ln -s www-get-ip $(DESTDIR)$(PREFIX)/bin/get-ip
 	ln -s www-get-ip $(DESTDIR)$(PREFIX)/bin/ext-ip
-	sed "s|=\"/etc/getip-url.conf\"$|=\"$(DESTDIR)/etc/getip-url.conf\"|" -i $(DESTDIR)$(PREFIX)/bin/www-get-ip
-	sed "s| ulimit -d '100'$| ulimit -d '1000'|" -i $(DESTDIR)$(PREFIX)/bin/www-get-ip
+	sed "s|=\"/etc/getip-url.conf\"\$|=\"$(DESTDIR)/etc/getip-url.conf\"|" -i $(DESTDIR)$(PREFIX)/bin/www-get-ip
+	sed "s| ulimit -d '100'\$| ulimit -d '1000'|" -i $(DESTDIR)$(PREFIX)/bin/www-get-ip
 	sed "s| timeout 2 | timeout 10 |" -i $(DESTDIR)$(PREFIX)/bin/www-get-ip
+
+check:
+  ./tests/test-myip-urls.sh
 
 clean:
 	rm -f www-get-ip.sh
