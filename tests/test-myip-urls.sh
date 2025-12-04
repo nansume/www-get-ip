@@ -6,7 +6,9 @@
 F=${1:?required: test-myip-urls </etc/getip-url.conf>}
 LOG="/tmp/test-urls.log"
 
-[ -w "${LOG}" ] && > "${LOG:?}"
+[ -w "${LOG:?}" ] || LOG="test-urls.log"
+> "${LOG}"
+
 [ -x "www-get-ip.sh" ] && {
 	PATH="${PATH}${PATH:+:}./"
 	[ -x "www-get-ip" ] || ln -s www-get-ip.sh www-get-ip
