@@ -1,7 +1,7 @@
 #!/bin/sh
-# Usage: test-urls /etc/getip-url.conf
+# Usage: test-myip-urls /etc/getip-url.conf
 
-F=${1:?required: loadfile </etc/getip-url.conf>}
+F=${1:?required: test-myip-urls </etc/getip-url.conf>}
 LOG="/tmp/test-urls.log"
 
 > "${LOG:?}"

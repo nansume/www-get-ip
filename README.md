@@ -70,7 +70,7 @@ $ www-get-ip -f /etc/getip-url.conf
 ## Manual Install
 
 ```
-% sudo cp www-get-ip /usr/local/bin/www-get-ip
+% sudo cp www-get-ip.sh /usr/local/bin/www-get-ip
 % sudo ln -s www-get-ip /usr/local/bin/get-ip
 % sudo ln -s www-get-ip /usr/local/bin/ext-ip
 % sudo cp getip-url.conf /usr/local/etc/getip-url.conf
@@ -82,7 +82,7 @@ $ www-get-ip -f /etc/getip-url.conf
 ```
 For testing
 ```
-% sudo cp tests/test-urls /usr/local/bin/test-myip-urls
+% sudo cp tests/test-myip-urls.sh /usr/local/bin/test-myip-urls
 % sudo chmod +x /usr/local/bin/test-myip-urls
 ```
 
