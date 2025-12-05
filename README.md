@@ -56,34 +56,66 @@ $ www-get-ip -f /etc/getip-url.conf
 
 - Busybox (ash, sed, grep, etc...)
 - Wget busybox with include TLS support (without external lib).
+- usleep (busybox)
+
+or
+
+- Dash
+- Sed,Grep,etc GNU
+- Coreutils GNU
+- Wget GNU
+- sleep (coreutils) ```sed "s| usleep [0-9]*$| sleep 0.2|" -i www-get-ip test-myip-urls```
 
 ---
 
 ## Install
 
+$ - 'user'
+% - 'root' or replace by 'sudo', e.g, ```sudo cp resolv.conf /etc/```
+
+#### Install under user (safe)
 ```
-% sudo make DESTDIR=/usr/local PREFIX= install
+$ mkdir ${HOME}/bin ${HOME}/etc
+$ make DESTDIR=${HOME} PREFIX= install
+$ make check
+$ echo 'export PATH=${HOME}/bin:${PATH}' >> .profile
+```
+or (it not recomended!)
+
+#### Install under root
+```
+% make DESTDIR=/usr/local PREFIX= install
+% make check
 ```
 
 ---
 
-## Manual Install
+### Manual Install
 
 ```
-% sudo cp www-get-ip.sh /usr/local/bin/www-get-ip
-% sudo ln -s www-get-ip /usr/local/bin/get-ip
-% sudo ln -s www-get-ip /usr/local/bin/ext-ip
-% sudo cp getip-url.conf /usr/local/etc/getip-url.conf
-% sudo chmod +x /usr/local/bin/www-get-ip
-% sudo chmod 0644 /usr/local/etc/getip-url.conf
-% sudo sed 's|="/etc/getip-url.conf"$|="/usr/local/etc/getip-url.conf"|' -i /usr/local/bin/www-get-ip
-% sudo sed "s| ulimit -d '100'$| ulimit -d '1000'|" -i /usr/local/bin/www-get-ip
-% sudo sed "s| timeout 2 | timeout 10 |" -i /usr/local/bin/www-get-ip
+$ mkdir /var/tmp/build/src/
+$ cd /var/tmp/build/
+$ wget -O www-get-ip.tar.gz https://github.com/nansume/www-get-ip/archive/master.tar.gz
+$ gunzip -dc www-get-ip.tar.gz | tar -C src/" -xkf -
+$ cd /var/tmp/build/src/www-get-ip-master/
+
+$ sed 's|="/etc/getip-url.conf"$|="/usr/local/etc/getip-url.conf"|' -i www-get-ip.sh
+$ sed "s| ulimit -d '[0-9]*'$| ulimit -d '2000'|" -i www-get-ip.sh
+$ sed "s| timeout [0-9] | timeout 4 |" -i www-get-ip.sh
+$ sed "s| usleep [0-9]*$| sleep 0.2|" -i www-get-ip tests/test-myip-urls
+
+$ chmod +x www-get-ip.sh
+$ chmod 0644 getip-url.conf
+
+% cp www-get-ip.sh /usr/local/bin/www-get-ip
+% ln -s www-get-ip /usr/local/bin/get-ip
+% ln -s www-get-ip /usr/local/bin/ext-ip
+% cp getip-url.conf /usr/local/etc/getip-url.conf
 ```
 For testing
 ```
-% sudo cp tests/test-myip-urls.sh /usr/local/bin/test-myip-urls
-% sudo chmod +x /usr/local/bin/test-myip-urls
+% chmod +x tests/test-myip-urls.sh
+% cp tests/test-myip-urls.sh /usr/local/bin/test-myip-urls
 ```
 
 ---
@@ -94,8 +126,14 @@ For testing
   then may be it:
 
 ```
-% sudo sed "s| ulimit -d '100'$| ulimit -d '1000'|" -i /usr/local/bin/www-get-ip
-% sudo sed "s| timeout 2 | timeout 10 |" -i /usr/local/bin/www-get-ip
+% sed "s| ulimit -d '[0-9]*'$| ulimit -d '2000'|" -i /bin/www-get-ip
+% sed "s| timeout [0-9] | timeout 4 |" -i /bin/www-get-ip
+```
+* usleep - no compat, replace to: 'sleep'
+	* sleep with fractions of a second, e.g, `sleep 0.2` - no compat
+
+```
+% sed "s| usleep [0-9]*$| sleep 1|" -i /bin/www-get-ip /bin/test-myip-urls
 ```
 
 ---
