@@ -7,11 +7,12 @@ set -euf
 
 print_help() {
   cat >&2 <<_EOF_
-Usage: ${0##*/} -u USER { -f CONF | -g URL }
+Usage: ${0##*/} -u USER -t TIMEOUT { -f CONF | -g URL }
 
 Get public ip
 
         -u      user (drop privileges)
+        -t      get timeout
         -f      Config file with urls
         -g      url (get url)
         -h      help
@@ -49,6 +50,9 @@ while [ x"${1-}" != x ]; do
 
     -u) shift;;
 
+    -t) g_timeout=${2:?required timeout}
+    		shift;;
+
     -h) print_help;;
 
      *) print_help;;
@@ -57,6 +61,7 @@ while [ x"${1-}" != x ]; do
 done
 [ -n "${confarg}" ] || confarg="/etc/getip-url.conf"
 [ -s "${confarg}" ] || [ -n "${g_url}" ] || { printf '%s\n' "${confarg}: not found... error" >&2; exit;}
+[ -n "${g_timeout-}" ] || g_timeout="10"
 
 
 loadfile() {
@@ -116,12 +121,12 @@ get_ip(){
   set -- "${1:+${1} }--header 'Host: ${HOST}'"
   set -- "${1:+${1} }--header 'User-Agent: ${UA-}'"
   set -- "${1:+${1} }--header 'Referer: ${REFERER:-${XURL}}'"
-  set -- "${1:+${1} }-q -SO -"
+  set -- "${1:+${1} }-q -T ${g_timeout} -SO -"
   set -- "${1:+${1} }'${XURL}'"
 
   ulimit -d '100'
 
-  { eval timeout 4 wget ${1} 2>&1; printf '\n';} 2>/dev/null | while IFS= read -r S; do
+  { eval wget ${1} 2>&1; printf '\n';} 2>/dev/null | while IFS= read -r S; do
     S=$(printf '%s' "${S}" | sed "s/&#46;/./g" 2>/dev/null | grep -om1 '\(>\|^\|[[:blank:]]\|["$q"]\)\(25[0-5]\|2[0-4][0-9]\|[01]\?[0-9][0-9]\?\)\.\(25[0-5]\|2[0-4][0-9]\|[01]\?[0-9][0-9]\?\)\.\(25[0-5]\|2[0-4][0-9]\|[01]\?[0-9][0-9]\?\)\.\(25[0-5]\|2[0-4][0-9]\|[01]\?[0-9][0-9]\?\)\(<\|["$q"]\|[[:blank:]]\|$\)' 2>/dev/null
     )
     [ -n "${S}" ] && { set -- ${S}; printf '%s\n' "${1}"; break ;}

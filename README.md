@@ -10,11 +10,12 @@ It ipv4-parser extract the ip address out of the myip sites.
 
 
 ```
-Usage: www-get-ip -u USER { -f CONF | -g URL }
+Usage: www-get-ip -u USER -t TIMEOUT { -f CONF | -g URL }
 
 Get public ip
 
         -u      user (drop privileges)
+        -t      get timeout
         -f      Config file with urls
         -g      url (get url)
         -h      help
@@ -31,7 +32,7 @@ from root with drop privileges
 from user
 ```
 $ www-get-ip
-$ www-get-ip -g https://www.showmyipaddress.eu
+$ www-get-ip -t 12 -g https://www.showmyipaddress.eu
 $ www-get-ip -f /etc/getip-url.conf
 ```
 ---
@@ -103,7 +104,6 @@ $ cd /var/tmp/build/src/www-get-ip-master/
 
 $ sed 's|="/etc/getip-url.conf"$|="/usr/local/etc/getip-url.conf"|' -i www-get-ip.sh
 $ sed "s| ulimit -d '[0-9]*'$| ulimit -d '2000'|" -i www-get-ip.sh
-$ sed "s| timeout [0-9] | timeout 4 |" -i www-get-ip.sh
 $ sed "s| usleep [0-9]*$| sleep 0.2|" -i www-get-ip tests/test-myip-urls
 
 $ chmod +x www-get-ip.sh
@@ -129,7 +129,7 @@ For testing
 
 ```
 % sed "s| ulimit -d '[0-9]*'$| ulimit -d '2000'|" -i /bin/www-get-ip
-% sed "s| timeout [0-9] | timeout 4 |" -i /bin/www-get-ip
+$ www-get-ip -t 20
 ```
 * usleep - no compat, replace to: 'sleep'
 	* sleep with fractions of a second, e.g, 'sleep 0.2' - no compat
