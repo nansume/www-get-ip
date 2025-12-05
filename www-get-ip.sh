@@ -113,7 +113,7 @@ get_ip(){
   : ${UA:= }
   URL=${URL#*://}
   HOST=${URL%%/*}; : ${HOST:?}
-  URL=${URL#$HOST}; : ${URL:?}
+  URL=${URL#$HOST}
   q=\"\'
   [ -n "${XURL-}" ] || XURL="http://${HOST}:80/${URL#/}"
 
