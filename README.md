@@ -1,6 +1,7 @@
 # WWW-Get-IP
 
 For get your public ip from one of the websites.
+
 It ipv4-parser extract the ip address out of the myip sites.
 
 ---
@@ -23,7 +24,7 @@ Get public ip
 
 ## Examples
 
-from root
+from root with drop privileges
 ```
 % www-get-ip -u USER
 ```
@@ -64,13 +65,14 @@ or
 - Sed,Grep,etc GNU
 - Coreutils GNU
 - Wget GNU
-- sleep (coreutils) ```sed "s| usleep [0-9]*$| sleep 0.2|" -i www-get-ip test-myip-urls```
+- sleep (coreutils) replace to: '/usleep 200000/ sleep 0.2/'
 
 ---
 
 ## Install
 
 $ - 'user'
+
 % - 'root' or replace by 'sudo', e.g, ```sudo cp resolv.conf /etc/```
 
 #### Install under user (safe)
@@ -82,7 +84,7 @@ $ echo 'export PATH=${HOME}/bin:${PATH}' >> .profile
 ```
 or (it not recomended!)
 
-#### Install under root
+#### Install under root (unsafe)
 ```
 % make DESTDIR=/usr/local PREFIX= install
 % make check
@@ -122,15 +124,15 @@ For testing
 
 ## Known issues
 
-* No return ip - The site opens in a web browser without error, ip address is here,
-  then may be it:
+* No return ip - The site opens in a web browser without error,
+	ip address is here, then may be it:
 
 ```
 % sed "s| ulimit -d '[0-9]*'$| ulimit -d '2000'|" -i /bin/www-get-ip
 % sed "s| timeout [0-9] | timeout 4 |" -i /bin/www-get-ip
 ```
 * usleep - no compat, replace to: 'sleep'
-	* sleep with fractions of a second, e.g, `sleep 0.2` - no compat
+	* sleep with fractions of a second, e.g, 'sleep 0.2' - no compat
 
 ```
 % sed "s| usleep [0-9]*$| sleep 1|" -i /bin/www-get-ip /bin/test-myip-urls
