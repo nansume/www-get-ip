@@ -31,7 +31,7 @@ case $(id -un) in
 			esac
 			shift
 		done
-		[ -n "${userarg}" ] || exit 1
+		[ -n "${userarg-}" ] || exit 1
 
 		FS="${IFS} "; su ${userarg} -c "${0##*/} $(printf '%s ' ${ARG})";
 		exit $?
@@ -59,9 +59,9 @@ while [ x"${1-}" != x ]; do
   esac
   shift
 done
-[ -n "${confarg}" ] || confarg="/etc/getip-url.conf"
-[ -s "${confarg}" ] || [ -n "${g_url}" ] || { printf '%s\n' "${confarg}: not found... error" >&2; exit;}
-[ -n "${g_timeout-}" ] || g_timeout="10"
+[ -n "${confarg-}" ] || confarg="/etc/getip-url.conf"
+[ -s "${confarg}" ] || [ -n "${g_url-}" ] || { printf '%s\n' "${confarg}: not found... error" >&2; exit;}
+[ -n "${g_timeout-}" ] || g_timeout="8"
 
 
 loadfile() {
@@ -72,7 +72,7 @@ loadfile() {
   set --
   while IFS= read -r X; do
     X=${X%%#*}
-    [ -n "${X}" ] || continue
+    [ -n "${X-}" ] || continue
     printf '%s' "${1:+${NL}}${X}"
     set -- "${X}"
   done < ${F}
@@ -101,7 +101,7 @@ seturl() {
     break
   done
 
-  [ -n "${7-}" ] && printf '%s\n' "${7}"  # URL
+  [ -n "${7}" ] && printf '%s\n' "${7}"  # URL
 }
 
 get_ip(){
@@ -112,10 +112,10 @@ get_ip(){
 
   : ${UA:= }
   URL=${URL#*://}
-  HOST=${URL%%/*}
-  URL=${URL#$HOST}
+  HOST=${URL%%/*}; : ${HOST:?}
+  URL=${URL#$HOST}; : ${URL:?}
   q=\"\'
-  [ -n "${XURL}" ] || XURL="http://${HOST}:80/${URL#/}"
+  [ -n "${XURL-}" ] || XURL="http://${HOST}:80/${URL#/}"
 
   set --
   set -- "${1:+${1} }--header 'Host: ${HOST}'"
