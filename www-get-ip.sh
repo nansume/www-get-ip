@@ -3,7 +3,7 @@
 # Name: get-www-ip | www-get-ip | get-remote-ip | get-ip | get-public-ip | external-ip | ext-ip
 # Usage: www-get-ip -f /etc/getip-url.conf -u <user> -g <url>
 # Sample: EXTIP=$(www-get-ip)
-set -euf
+set -e -u -f
 
 print_help() {
   cat >&2 <<_EOF_
@@ -12,9 +12,10 @@ Usage: ${0##*/} -u USER -t TIMEOUT { -f CONF | -g URL }
 Get public ip
 
         -u      user (drop privileges)
-        -t      get timeout
+        -t      request timeout
         -f      Config file with urls
         -g      url (get url)
+        -d      dry-run - no fetch, only show a number and url
         -h      help
 _EOF_
 
@@ -38,6 +39,7 @@ case $(id -un) in
 	;;
 esac
 
+dry_run="0"
 confarg=
 url=
 while [ x"${1-}" != x ]; do
@@ -53,6 +55,8 @@ while [ x"${1-}" != x ]; do
     -t) g_timeout=${2:?required timeout}
     		shift;;
 
+		-d)	dry_run="1";;
+
     -h) print_help;;
 
      *) print_help;;
@@ -61,7 +65,7 @@ while [ x"${1-}" != x ]; do
 done
 [ -n "${confarg-}" ] || confarg="/etc/getip-url.conf"
 [ -s "${confarg}" ] || [ -n "${g_url-}" ] || { printf '%s\n' "${confarg}: not found... error" >&2; exit;}
-[ -n "${g_timeout-}" ] || g_timeout="8"
+[ -n "${g_timeout-}" ] || g_timeout="10"
 
 
 loadfile() {
@@ -86,12 +90,7 @@ seturl() {
     set -- "${1}" ${2} $(expr "0${3}" + '1') "${4}"
   done
 
-  set -- "${1}" ${2} ${3} "${4}" '3' '0'
-
-  NUMRAND=$(tr -dc 0-9 < /dev/urandom | fold -w ${#3} | head -n 1)
-
-  # expr ${RANDOM} % 80
-  set -- "${1}" ${2} ${3} "${4}" $(expr "0${NUMRAND}" % ${3}) '0'
+  set -- "${1}" ${2} ${3} "${4}" $(shuf -z -n '1' -i 1-${3}) '0'
 
   IFS=${1}
   for X in ${4}; do
@@ -101,36 +100,28 @@ seturl() {
     break
   done
 
-  [ -n "${7}" ] && printf '%s\n' "${7}"  # URL
+	if [ "${dry_run:-0}" -eq '0' ]; then
+  	[ -n "${7}" ] && printf '%s\n' "${7}"  # URL
+ 	else
+ 		[ -n "${7}" ] && printf '%s\n' "${5}: ${7}"
+  fi
 }
 
 get_ip(){
-  URL=${1:?} XURL=${1}
-
+  XURL=${1:?}
   UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0"
-  REFERER=${URL}
-
-  : ${UA:= }
-  URL=${URL#*://}
-  HOST=${URL%%/*}; : ${HOST:?}
-  URL=${URL#$HOST}
   q=\"\'
-  [ -n "${XURL-}" ] || XURL="http://${HOST}:80/${URL#/}"
 
   set --
-  set -- "${1:+${1} }--header 'Host: ${HOST}'"
-  set -- "${1:+${1} }--header 'User-Agent: ${UA-}'"
-  set -- "${1:+${1} }--header 'Referer: ${REFERER:-${XURL}}'"
+  set -- "${1:+${1} }--header 'User-Agent: ${UA}'"
+  set -- "${1:+${1} }--header 'Referer: ${XURL}'"
   set -- "${1:+${1} }-q -T ${g_timeout} -SO -"
   set -- "${1:+${1} }'${XURL}'"
 
-  ulimit -d '100'
+  ulimit -d '2000'
 
-  { eval wget ${1} 2>&1; printf '\n';} 2>/dev/null | while IFS= read -r S; do
-    S=$(printf '%s' "${S}" | sed "s/&#46;/./g;s/\(&quot;\|,\)/ /g" 2>/dev/null | grep -om1 '\(>\|^\|[[:blank:]]\|["$q"]\)\(25[0-5]\|2[0-4][0-9]\|[01]\?[0-9][0-9]\?\)\.\(25[0-5]\|2[0-4][0-9]\|[01]\?[0-9][0-9]\?\)\.\(25[0-5]\|2[0-4][0-9]\|[01]\?[0-9][0-9]\?\)\.\(25[0-5]\|2[0-4][0-9]\|[01]\?[0-9][0-9]\?\)\(<\|["$q"]\|[[:blank:]]\|$\)' 2>/dev/null
-    )
-    [ -n "${S}" ] && { set -- ${S}; printf '%s\n' "${1}"; break ;}
-  done
+  S=$(eval wget ${1} 2>&1 | head -c 50k 2>/dev/null | sed "s/&#46;/./g;s/\(&quot;\|,\)/ /g" 2>/dev/null | grep -om1 '\(>\|^\|[[:blank:]]\|["$q"]\)\(25[0-5]\|2[0-4][0-9]\|[01]\?[0-9][0-9]\?\)\.\(25[0-5]\|2[0-4][0-9]\|[01]\?[0-9][0-9]\?\)\.\(25[0-5]\|2[0-4][0-9]\|[01]\?[0-9][0-9]\?\)\.\(25[0-5]\|2[0-4][0-9]\|[01]\?[0-9][0-9]\?\)\(<\|["$q"]\|[[:blank:]]\|$\)' 2>/dev/null)
+	[ -n "${S}" ] && { set -- ${S}; printf '%s\n' "${1}";}
 }
 
 
@@ -143,13 +134,18 @@ until [ -n "${EXTIP-}" ]; do
     break
   elif [ -n "${g_url-}" ]; then
     [ "0${2}" -gt "3" ] && break
-  else
+  elif [ "${dry_run:-0}" -eq '0' ]; then
     url=$(seturl ${confarg:?required filename})
+  else
+  	seturl ${confarg:?required filename}
+  	exit 0
   fi
-  EXTIP=$(get_ip ${url:?required url} || exit 0)
-  EXTIP="${EXTIP%${EXTIP##*[0-9.]}}"
-  EXTIP="${EXTIP#${EXTIP%%[0-9.]*}}"
-  usleep 200000
+  if [ "${dry_run:-0}" -eq '0' ]; then
+  	EXTIP=$(get_ip ${url:?required url} || exit 0)
+  	EXTIP="${EXTIP%${EXTIP##*[0-9.]}}"
+  	EXTIP="${EXTIP#${EXTIP%%[0-9.]*}}"
+  	usleep '200000' 2>/dev/null || sleep '1'
+  fi
   set -- ${1} $(expr "0${2}" + 1)
 done
 
