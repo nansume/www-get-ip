@@ -14,7 +14,8 @@ install:
 	ln -s www-get-ip $(DESTDIR)$(PREFIX)/bin/ext-ip
 
 check:
-	./tests/test-myip-urls.sh ./getip-url.conf
+	./tests/test-myip-rand.sh ./getip-url.conf 4
+	#./tests/test-myip-urls.sh ./getip-url.conf
 
 clean:
 	rm -f www-get-ip.sh
