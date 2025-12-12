@@ -114,7 +114,7 @@ seturl() {
 
 get_ip(){
   XURL=${1:?}
-  UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0"
+  UA="curl/7.54.1"  # useragent
   q=\"\'
 
   set --
