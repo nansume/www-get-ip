@@ -15,6 +15,7 @@ Get public ip
         -t      request timeout
         -f      Config file with urls
         -g      url (get url)
+        -v      verbose (add url)
         -d      dry-run - no fetch, only show a number and url
         -h      help
 _EOF_
@@ -39,6 +40,7 @@ case $(id -un) in
 	;;
 esac
 
+verbose="0"
 dry_run="0"
 confarg=
 url=
@@ -54,6 +56,8 @@ while [ x"${1-}" != x ]; do
 
     -t) g_timeout=${2:?required timeout}
     		shift;;
+
+    -v) verbose="1";;
 
 		-d)	dry_run="1";;
 
@@ -76,6 +80,7 @@ loadfile() {
   set --
   while IFS= read -r X; do
     X=${X%%#*}
+    X="${X%${X##*[![:space:]]}}"
     [ -n "${X-}" ] || continue
     printf '%s' "${1:+${NL}}${X}"
     set -- "${X}"
@@ -149,4 +154,5 @@ until [ -n "${EXTIP-}" ]; do
   set -- ${1} $(expr "0${2}" + 1)
 done
 
+[ "${verbose:-0}" -ne '0' ] && printf %s\\n "www-get-ip -g '${url:?}'"
 printf %s\\n "${EXTIP:?required ip address}"
