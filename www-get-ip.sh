@@ -1,13 +1,19 @@
 #!/bin/sh
 # File: /bin/www-get-ip 0755 root:root
 # Name: get-www-ip | www-get-ip | get-remote-ip | get-ip | get-public-ip | external-ip | ext-ip
-# Usage: www-get-ip -f /etc/getip-url.conf -u <user> -g <url>
-# Sample: EXTIP=$(www-get-ip)
+# Usage: www-get-ip -v -f /etc/getip-url.conf -u <user> -g <url>
+# Example: EXTIP=$(www-get-ip) | EXTIP=$(www-get-ip -u nobody)
 set -e -u -f
+
+cleanup(){
+  [ -f "${tmpfile-}" ] && rm -- "${tmpfile}"
+  trap - TERM EXIT
+  exit
+}
 
 print_help() {
   cat >&2 <<_EOF_
-Usage: ${0##*/} -u USER -t TIMEOUT { -f CONF | -g URL }
+Usage: ${0##*/} -v -u USER -t TIMEOUT { -f CONF | -g URL }
 
 Get public ip
 
@@ -15,13 +21,15 @@ Get public ip
         -t      request timeout
         -f      Config file with urls
         -g      url (get url)
-        -v      verbose (add url)
-        -d      dry-run - no fetch, only show a number and url
+        -v      verbose (show url)
+        -n      dry-run - no fetch, only show a number and url
         -h      help
 _EOF_
 
 exit 1
 }
+
+trap 'cleanup' INT HUP TERM EXIT
 
 case $(id -un) in
   'root')
@@ -61,7 +69,7 @@ while [ x"${1-}" != x ]; do
 
     -v) verbose="1";;
 
-		-d)	dry_run="1";;
+		-n)	dry_run="1";;
 
     -h) print_help;;
 
@@ -117,23 +125,18 @@ seturl() {
 }
 
 get_ip(){
-  local IFS="$(printf '\n\t') "
   local XURL=${1:?}
   local UA="curl/7.54.1"  # useragent
-  local t=$(expr "0${g_timeout}" - 1)
 
   set --
-  set -- "${1:+${1} }-q -T ${t} -SO -"
+  set -- "${1:+${1} }-q -T ${g_timeout} -SO -"
   set -- "${1:+${1} }--header 'User-Agent: ${UA}'"
   set -- "${1:+${1} }--header 'Referer: ${XURL}'"
   set -- "${1:+${1} }'${XURL}'"
 
   ulimit -d '2000'
 
-  tmpfile=$(mktemp -u -t myipXXXXXX)
-  exec 3> ${tmpfile}
-  exec 4< ${tmpfile}
-  eval timeout ${g_timeout} wget ${1} >&3 2>&1
+  eval wget ${1} >&3 2>&1
 
   set -- '\(25[0-5]\|2[0-4][0-9]\|[01]\?[0-9][0-9]\?\)' \"\'
   set -- "${1}" "${2}" "\(>\|^\|[[:blank:]]\|[$2]\)" "\(<\|[$2]\|[[:blank:]]\|$\)"
@@ -144,9 +147,12 @@ get_ip(){
 
   IFS=' ' read -r S _ <&4
 	[ -n "${S-}" ] && { set -- ${S}; printf '%s\n' "${1}";}
-	[ -f "${tmpfile:?}" ] && rm -- "${tmpfile}"
 }
 
+
+tmpfile=$(mktemp -u -t myipXXXXXX)
+exec 3> ${tmpfile}
+exec 4< ${tmpfile}
 
 set -- '7' '0'
 
