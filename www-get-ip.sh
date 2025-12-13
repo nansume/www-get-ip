@@ -1,8 +1,16 @@
 #!/bin/sh
 # File: /bin/www-get-ip 0755 root:root
+# ---------------------------------------------------------------------------------------------
+# Copyright (C) 2025 Artjom Slepnjov, Shellgen
+# License GPLv3: GNU GPL version 3 only
+# http://www.gnu.org/licenses/gpl-3.0.html
+# ---------------------------------------------------------------------------------------------
 # Name: get-www-ip | www-get-ip | get-remote-ip | get-ip | get-public-ip | external-ip | ext-ip
 # Usage: www-get-ip -v -f /etc/getip-url.conf -u <user> -g <url>
 # Example: EXTIP=$(www-get-ip) | EXTIP=$(www-get-ip -u nobody)
+# ---------------------------------------------------------------------------------------------
+# Date: 2025-12-13 20:25 UTC - last change
+# ---------------------------------------------------------------------------------------------
 set -e -u -f
 
 cleanup(){
@@ -11,19 +19,25 @@ cleanup(){
   exit
 }
 
+print_progver() {
+  printf '%s\n' "WWW-Get-IP 0.0.1a written on Dec 13 2025 20:25:03"
+  printf '%s\n' "Copyright 2025 Artjom Slepnjov (shellgen@uncensored.citadel.org)"
+}
+
 print_help() {
+  print_progver; printf '\n'
   cat >&2 <<_EOF_
 Usage: ${0##*/} -v -u USER -t TIMEOUT { -f CONF | -g URL }
 
-Get public ip
-
+Options:
         -u      user (drop privileges)
         -t      request timeout
         -f      Config file with urls
         -g      url (get url)
         -v      verbose (show url)
         -n      dry-run - no fetch, only show a number and url
-        -h      help
+        -V      Print version information and exit
+        -h      Print usage help and exit
 _EOF_
 
 exit 1
@@ -70,6 +84,9 @@ while [ x"${1-}" != x ]; do
     -v) verbose="1";;
 
 		-n)	dry_run="1";;
+
+		-V) print_progver
+		    exit 0;;
 
     -h) print_help;;
 
