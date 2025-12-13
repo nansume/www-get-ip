@@ -54,7 +54,9 @@ while [ x"${1-}" != x ]; do
 
     -u) shift;;
 
-    -t) g_timeout=${2:?required timeout}
+    -t) g_timeout=${2#${2%%[!0-9]*}}
+        [ -z "${2#${2%%[!0-9]*}}" ] || set --
+        g_timeout=${2:?required timeout}
     		shift;;
 
     -v) verbose="1";;
@@ -115,20 +117,34 @@ seturl() {
 }
 
 get_ip(){
-  XURL=${1:?}
-  UA="curl/7.54.1"  # useragent
-  q=\"\'
+  local IFS="$(printf '\n\t') "
+  local XURL=${1:?}
+  local UA="curl/7.54.1"  # useragent
+  local t=$(expr "0${g_timeout}" - 1)
 
   set --
+  set -- "${1:+${1} }-q -T ${t} -SO -"
   set -- "${1:+${1} }--header 'User-Agent: ${UA}'"
   set -- "${1:+${1} }--header 'Referer: ${XURL}'"
-  set -- "${1:+${1} }-q -T ${g_timeout} -SO -"
   set -- "${1:+${1} }'${XURL}'"
 
   ulimit -d '2000'
 
-  S=$(eval wget ${1} 2>&1 | head -c 50k 2>/dev/null | decolorize | sed "s/&#46;/./g;s/\(&quot;\|,\)/ /g" 2>/dev/null | grep -om1 '\(>\|^\|[[:blank:]]\|["$q"]\)\(25[0-5]\|2[0-4][0-9]\|[01]\?[0-9][0-9]\?\)\.\(25[0-5]\|2[0-4][0-9]\|[01]\?[0-9][0-9]\?\)\.\(25[0-5]\|2[0-4][0-9]\|[01]\?[0-9][0-9]\?\)\.\(25[0-5]\|2[0-4][0-9]\|[01]\?[0-9][0-9]\?\)\(<\|["$q"]\|[[:blank:]]\|$\)' 2>/dev/null)
-	[ -n "${S}" ] && { set -- ${S}; printf '%s\n' "${1}";}
+  tmpfile=$(mktemp -u -t myipXXXXXX)
+  exec 3> ${tmpfile}
+  exec 4< ${tmpfile}
+  eval timeout ${g_timeout} wget ${1} >&3 2>&1
+
+  set -- '\(25[0-5]\|2[0-4][0-9]\|[01]\?[0-9][0-9]\?\)' \"\'
+  set -- "${1}" "${2}" "\(>\|^\|[[:blank:]]\|[$2]\)" "\(<\|[$2]\|[[:blank:]]\|$\)"
+
+  cat <&4 | decolorize | sed "s/&#46;/./g;s/\(&quot;\|,\)/ /g" 2>/dev/null |
+
+  grep -om1 "${3}${1}\.${1}\.${1}\.${1}${4}" 2>/dev/null >&3
+
+  IFS=' ' read -r S _ <&4
+	[ -n "${S-}" ] && { set -- ${S}; printf '%s\n' "${1}";}
+	[ -f "${tmpfile:?}" ] && rm -- "${tmpfile}"
 }
 
 
