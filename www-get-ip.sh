@@ -76,8 +76,8 @@ while [ x"${1-}" != x ]; do
 
     -u) shift;;
 
-    -t) g_timeout=${2#${2%%[!0-9]*}}
-        [ -z "${2#${2%%[!0-9]*}}" ] || set --
+    -t) g_timeout=${2#${2%%[^0-9]*}}
+        [ -z "${2#${2%%[^0-9]*}}" ] || set --
         g_timeout=${2:?required timeout}
     		shift;;
 
@@ -99,6 +99,8 @@ done
 [ -n "${g_timeout-}" ] || g_timeout="10"
 
 
+usleep(){ command -v usleep >/dev/null && command usleep ${@} || sleep '1';}
+
 decolorize(){ sed 's/\x1B\[[0-9;]\{1,8\}[A-Za-z]//g';}
 
 loadfile() {
@@ -109,7 +111,7 @@ loadfile() {
   set --
   while IFS= read -r X; do
     X=${X%%#*}
-    X="${X%${X##*[![:space:]]}}"
+    X="${X%${X##*[^[:space:]]}}"
     [ -n "${X-}" ] || continue
     printf '%s' "${1:+${NL}}${X}"
     set -- "${X}"
@@ -190,7 +192,7 @@ until [ -n "${EXTIP-}" ]; do
   	EXTIP=$(get_ip ${url:?required url} || exit 0)
   	EXTIP="${EXTIP%${EXTIP##*[0-9.]}}"
   	EXTIP="${EXTIP#${EXTIP%%[0-9.]*}}"
-  	usleep '200000' 2>/dev/null || sleep '1'
+  	usleep 200000
   fi
   set -- ${1} $(expr "0${2}" + 1)
 done
