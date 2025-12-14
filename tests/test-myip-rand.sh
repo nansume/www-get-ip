@@ -4,6 +4,7 @@
 # Usage: test-myip-rand /etc/getip-url.conf 4
 set -e -u -f
 
+IFS="$(printf '\n\t') "
 F=${1:?required: test-myip-rand </etc/getip-url.conf>}
 NMAX=${2:?required: number max requests}
 LOG="/tmp/test-myip-rand.log"
@@ -20,11 +21,11 @@ N=0
 {
 while IFS= read -r X; do
   X=${X%%#*}
-  X="${X%${X##*[![:space:]]}}"
+  X="${X%${X##*[^[:space:]]}}"
   if [ -n "${X}" ]; then
-    www-get-ip -v -f ${F} && N=$(expr "0${N}" + '1')
+    www-get-ip -v -f ${F}; N=$(expr "0${N}" + '1')
     printf '\n'
-    usleep '200000' 2>/dev/null || sleep '1'
+    sleep 1
     [ "0${N}" -ge "0${NMAX}" ] && break
   fi
 done < ${F}
