@@ -45,7 +45,7 @@ exit 1
 
 trap 'cleanup' INT HUP TERM EXIT
 
-IFS="$(printf '\n\t') "
+IFS="$(printf '\n\t')"
 OLDIFS=${IFS}
 
 case $(id -un) in
