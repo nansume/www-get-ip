@@ -160,8 +160,8 @@ get_ip(){
 
   IFS=${OLDIFS}
 
-  set -- '\(25[0-5]\|2[0-4][0-9]\|[01]\?[0-9][0-9]\?\)' \"\'
-  set -- "${1}" "${2}" "\(>\|^\|[[:blank:]]\|[$2]\)" "\(<\|[$2]\|[[:blank:]]\|$\)"
+  set -- '\(25[0-5]\|2[0-4][0-9]\|[01]\?[0-9][0-9]\?\)' "[[:punct:]]"
+  set -- "${1}" "${2}" "\(>\|^\|[[:blank:]]\|${2}\)" "\(<\|${2}\|[[:blank:]]\|$\)"
 
   cat <&3 | decolorize | sed "s/&#46;/./g;s/\(&quot;\|,\)/ /g" 2>/dev/null |
 
@@ -197,7 +197,7 @@ until [ -n "${EXTIP-}" ]; do
   	EXTIP="${EXTIP#${EXTIP%%[0-9.]*}}"  # it digits + dots
   	[ "${#EXTIP}" -le '15' ] || EXTIP=
   	[ "${#EXTIP}" -ge '7' ] || EXTIP=   # check length ip addr
-  	#[ -n "${EXTIP-}" ] || { wait; printf %s;}
+  	[ -n "${EXTIP-}" ] || dd if=/dev/urandom bs=4096 count=2048 >/dev/null 2>&1  # delay
   fi
   set -- ${1} $(expr "0${2}" + 1)
 done
