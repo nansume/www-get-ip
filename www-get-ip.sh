@@ -189,7 +189,9 @@ until [ -n "${EXTIP-}" ]; do
   if [ "${dry_run:-0}" -eq '0' ]; then
   	EXTIP=$(get_ip ${url:?required url} || exit 0)
   	EXTIP="${EXTIP%${EXTIP##*[0-9.]}}"
-  	EXTIP="${EXTIP#${EXTIP%%[0-9.]*}}"
+  	EXTIP="${EXTIP#${EXTIP%%[0-9.]*}}"  # it digits + dots
+  	[ "${#EXTIP}" -le '15' ] || EXTIP=
+  	[ "${#EXTIP}" -ge '7' ] || EXTIP=   # check length ip addr
   	[ -n "${EXTIP-}" ] || sleep 1
   fi
   set -- ${1} $(expr "0${2}" + 1)
