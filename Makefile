@@ -8,7 +8,7 @@ install:
 	sed "s|=\"/etc/getip-url.conf\"$$|=\"$(CONFDIR)/getip-url.conf\"|" -i www-get-ip.sh
 	install -Dvm 755 www-get-ip.sh $(DESTDIR)$(BINDIR)/www-get-ip
 	install -Dvm 755 tests/test-myip-urls.sh $(DESTDIR)$(BINDIR)/test-myip-urls
-	install -Dbvm 644 getip-url.conf $(CONFDIR)/getip-url.conf
+	install -Dbvm 644 getip-url.conf $(DESTDIR)$(CONFDIR)/getip-url.conf
 	ln -s www-get-ip $(DESTDIR)$(BINDIR)/get-ip
 
 check:
