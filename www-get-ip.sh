@@ -190,7 +190,7 @@ until [ -n "${EXTIP-}" ]; do
   	EXTIP=$(get_ip ${url:?required url} || exit 0)
   	EXTIP="${EXTIP%${EXTIP##*[0-9.]}}"
   	EXTIP="${EXTIP#${EXTIP%%[0-9.]*}}"
-  	usleep 200000 2>/dev/null || sleep 1
+  	[ -n "${EXTIP-}" ] || sleep 1
   fi
   set -- ${1} $(expr "0${2}" + 1)
 done
