@@ -45,6 +45,9 @@ exit 1
 
 trap 'cleanup' INT HUP TERM EXIT
 
+IFS="$(printf '\n\t') "
+OLDIFS=${IFS}
+
 case $(id -un) in
   'root')
 		ARG=${@}
@@ -102,7 +105,7 @@ done
 decolorize(){ sed 's/\x1B\[[0-9;]\{1,8\}[A-Za-z]//g';}
 
 loadfile() {
-  local NL="$(printf '\n\t')"; NL=${NL%?}
+  local NL="${IFS%${IFS#?}}"
   local F=${1:?required: loadfile </etc/getip-url.conf>}
   local X
 
@@ -145,41 +148,43 @@ get_ip(){
   local XURL=${1:?}
   local UA="curl/7.54.1"  # useragent
 
-  set --
-  set -- "${1:+${1} }-q -T ${g_timeout} -SO -"
-  set -- "${1:+${1} }--header 'User-Agent: ${UA}'"
-  set -- "${1:+${1} }--header 'Referer: ${XURL}'"
-  set -- "${1:+${1} }'${XURL}'"
+  IFS=","
+  set -- "-q,-T,${g_timeout},-SO,-"
+  set -- "${1},--header,'User-Agent: ${UA}'"
+  set -- "${1},--header,'Referer: ${XURL}'"
+  set -- ${@}
 
   ulimit -d 20000
 
-  eval wget ${1} >&3 2>&1
+  wget ${@} -- "${XURL}" >&4 2>&1
+
+  IFS=${OLDIFS}
 
   set -- '\(25[0-5]\|2[0-4][0-9]\|[01]\?[0-9][0-9]\?\)' \"\'
   set -- "${1}" "${2}" "\(>\|^\|[[:blank:]]\|[$2]\)" "\(<\|[$2]\|[[:blank:]]\|$\)"
 
-  cat <&4 | decolorize | sed "s/&#46;/./g;s/\(&quot;\|,\)/ /g" 2>/dev/null |
+  cat <&3 | decolorize | sed "s/&#46;/./g;s/\(&quot;\|,\)/ /g" 2>/dev/null |
 
-  grep -om1 "${3}${1}\.${1}\.${1}\.${1}${4}" 2>/dev/null >&3
+  grep -om1 "${3}${1}\.${1}\.${1}\.${1}${4}" 2>/dev/null >&4
 
-  IFS=' ' read -r S _ <&4
+  IFS=' ' read -r S _ <&3
 	[ -n "${S-}" ] && { set -- ${S}; printf '%s\n' "${1}";}
 }
 
 
-tmpfile=$(mktemp -u -t myipXXXXXX)
-exec 3> ${tmpfile}
-exec 4< ${tmpfile}
+tmpfile=$(mktemp -t myipXXXXXX)
+exec 3< ${tmpfile}
+exec 4> ${tmpfile}
 
 set -- '7' '0'
 
 EXTIP=
 url=${g_url-}
 until [ -n "${EXTIP-}" ]; do
-  if [ "0${2}" -gt "${1}" ]; then
-    break
-  elif [ -n "${g_url-}" ]; then
+  if [ -n "${g_url-}" ]; then
     [ "0${2}" -gt "3" ] && break
+  elif [ "0${2}" -gt "${1}" ]; then
+    break
   elif [ "${dry_run:-0}" -eq '0' ]; then
     url=$(seturl ${confarg:?required filename})
   else
@@ -192,7 +197,7 @@ until [ -n "${EXTIP-}" ]; do
   	EXTIP="${EXTIP#${EXTIP%%[0-9.]*}}"  # it digits + dots
   	[ "${#EXTIP}" -le '15' ] || EXTIP=
   	[ "${#EXTIP}" -ge '7' ] || EXTIP=   # check length ip addr
-  	[ -n "${EXTIP-}" ] || sleep 1
+  	#[ -n "${EXTIP-}" ] || { wait; printf %s;}
   fi
   set -- ${1} $(expr "0${2}" + 1)
 done
