@@ -2,7 +2,9 @@
 # File: /bin/test-myip-urls
 # Desc: Checking requests for multiple myip sites from the list.
 # Usage: test-myip-urls /etc/getip-url.conf
+set -e -u -f
 
+IFS="$(printf '\n\t') "
 F=${1:?required: test-myip-urls </etc/getip-url.conf>}
 LOG="/tmp/test-urls.log"
 
@@ -18,12 +20,12 @@ N=0
 {
 while IFS= read -r X; do
   X=${X%%#*}
-  X="${X%${X##*[![:space:]]}}"
+  X="${X%${X##*[^[:space:]]}}"
   if [ -n "${X}" ]; then
     printf '%s\n' "www-get-ip -g '${X}'"
-    www-get-ip -g "${X}" && N=$(expr "0${N}" + '1')
+    www-get-ip -g "${X}"; N=$(expr "0${N}" + '1')
     printf '\n'
-    usleep 200000
+    sleep 1
   fi
 done < ${F}
 
