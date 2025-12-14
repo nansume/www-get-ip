@@ -151,7 +151,7 @@ get_ip(){
   set -- "${1:+${1} }--header 'Referer: ${XURL}'"
   set -- "${1:+${1} }'${XURL}'"
 
-  ulimit -d '2000'
+  ulimit -d 20000
 
   eval wget ${1} >&3 2>&1
 
