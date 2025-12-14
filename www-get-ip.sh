@@ -99,8 +99,6 @@ done
 [ -n "${g_timeout-}" ] || g_timeout="10"
 
 
-usleep(){ command -v usleep >/dev/null && command usleep ${@} || sleep '1';}
-
 decolorize(){ sed 's/\x1B\[[0-9;]\{1,8\}[A-Za-z]//g';}
 
 loadfile() {
@@ -192,7 +190,7 @@ until [ -n "${EXTIP-}" ]; do
   	EXTIP=$(get_ip ${url:?required url} || exit 0)
   	EXTIP="${EXTIP%${EXTIP##*[0-9.]}}"
   	EXTIP="${EXTIP#${EXTIP%%[0-9.]*}}"
-  	usleep 200000
+  	usleep 200000 2>/dev/null || sleep 1
   fi
   set -- ${1} $(expr "0${2}" + 1)
 done
