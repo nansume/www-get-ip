@@ -20,7 +20,7 @@ N=0
 {
 while IFS= read -r X; do
   X=${X%%#*}
-  X="${X%${X##*[^[:space:]]}}"
+  X="${X%${X##*[![:space:]]}}"
   if [ -n "${X}" ]; then
     printf '%s\n' "www-get-ip -g '${X}'"
     www-get-ip -g "${X}"; N=$(expr "0${N}" + '1')

@@ -11,6 +11,11 @@ install:
 	install -Dbvm 644 getip-url.conf $(DESTDIR)$(CONFDIR)/getip-url.conf
 	ln -s www-get-ip $(DESTDIR)$(BINDIR)/get-ip
 
+install-compat: install
+	sed 's@\[\!@\[\^@' -i www-get-ip.sh tests/*.sh
+
+install-android: install-compat
+
 check:
 	./tests/test-myip-rand.sh ./getip-url.conf 4
 

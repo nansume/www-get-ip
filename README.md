@@ -105,6 +105,7 @@ $ cd /var/tmp/build/src/www-get-ip-master/
 $ sed 's|="/etc/getip-url.conf"$|="/usr/local/etc/getip-url.conf"|' -i www-get-ip.sh
 $ sed "s| ulimit -d '[0-9]*'$| ulimit -d '2000'|" -i www-get-ip.sh
 $ sed "s| usleep [0-9]*$| sleep 0.2|" -i www-get-ip tests/test-myip-urls
+$ sed 's@\[\!@\[\^@' -i www-get-ip.sh tests/*.sh
 
 $ chmod +x www-get-ip.sh
 $ chmod 0644 getip-url.conf
@@ -128,14 +129,20 @@ For testing
 	ip address is here, then may be it:
 
 ```
-% sed "s| ulimit -d '[0-9]*'$| ulimit -d '2000'|" -i /bin/www-get-ip
+$ sed "s| ulimit -d '[0-9]*'$| ulimit -d '2000'|" -i www-get-ip
 $ www-get-ip -t 20
 ```
 * usleep - no compat, replace to: 'sleep'
 	* sleep with fractions of a second, e.g, 'sleep 0.2' - no compat
 
 ```
-% sed "s| usleep [0-9]*$| sleep 1|" -i /bin/www-get-ip /bin/test-myip-urls
+$ sed "s| usleep [0-9]*$| sleep 1|" -i www-get-ip test-myip-urls
+```
+* [! - no compat with old shell, replace to: '[^'
+  * `[! - e.g, 'i=${i%${i##*[![:space:]]}}'` - no compat
+
+```
+% sed 's@\[\!@\[\^@' -i www-get-ip.sh tests/*.sh
 ```
 
 ---
