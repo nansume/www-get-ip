@@ -8,6 +8,7 @@
 # Name: get-www-ip | www-get-ip | get-remote-ip | get-ip | get-public-ip | external-ip | ext-ip
 # Usage: www-get-ip -v -f /etc/getip-url.conf -u <user> -g <url>
 # Example: EXTIP=$(www-get-ip) | EXTIP=$(www-get-ip -u nobody)
+# Compatible: replace `[!` to `[^`
 # ---------------------------------------------------------------------------------------------
 # Date: 2025-12-13 20:25 UTC - last change
 # ---------------------------------------------------------------------------------------------
@@ -79,8 +80,8 @@ while [ x"${1-}" != x ]; do
 
     -u) shift;;
 
-    -t) g_timeout=${2#${2%%[^0-9]*}}
-        [ -z "${2#${2%%[^0-9]*}}" ] || set --
+    -t) g_timeout=${2#${2%%[!0-9]*}}
+        [ -z "${2#${2%%[!0-9]*}}" ] || set --
         g_timeout=${2:?required timeout}
     		shift;;
 
@@ -112,7 +113,7 @@ loadfile() {
   set --
   while IFS= read -r X; do
     X=${X%%#*}
-    X="${X%${X##*[^[:space:]]}}"
+    X="${X%${X##*[![:space:]]}}"
     [ -n "${X-}" ] || continue
     printf '%s' "${1:+${NL}}${X}"
     set -- "${X}"
