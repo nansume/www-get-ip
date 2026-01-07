@@ -105,6 +105,15 @@ done
 
 decolorize(){ sed 's/\x1B\[[0-9;]\{1,8\}[A-Za-z]//g';}
 
+filter_ipaddr(){
+  sed \
+    -e "/[^0-9.]0.0.0.0[^0-9.]/d" \
+    -e "/  Ip: [0-9]/d" \
+    -e "/  ServerIP: [0-9]/d" \
+    -e "/  X-Server-Ip: [0-9]/d" \
+    -e "/ 127.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}/d"
+}
+
 loadfile() {
   local NL="${IFS%${IFS#?}}"
   local F=${1:?required: loadfile </etc/getip-url.conf>}
@@ -164,7 +173,7 @@ get_ip(){
   set -- '\(25[0-5]\|2[0-4][0-9]\|[01]\?[0-9][0-9]\?\)' "[[:punct:]]"
   set -- "${1}" "${2}" "\(>\|^\|[[:blank:]]\|${2}\)" "\(<\|${2}\|[[:blank:]]\|$\)"
 
-  cat <&3 | decolorize | sed "s/&#46;/./g;s/\(&quot;\|,\)/ /g" 2>/dev/null |
+  cat <&3 | decolorize | sed "s/&#46;/./g;s/\(&quot;\|,\)/ /g" 2>/dev/null | filter_ipaddr |
 
   grep -om1 "${3}${1}\.${1}\.${1}\.${1}${4}" 2>/dev/null >&4
 
