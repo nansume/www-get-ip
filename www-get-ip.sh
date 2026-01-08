@@ -14,12 +14,6 @@
 # ---------------------------------------------------------------------------------------------
 set -e -u -f
 
-cleanup(){
-  [ -f "${tmpfile-}" ] && rm -- "${tmpfile}"
-  trap - TERM EXIT
-  exit
-}
-
 print_progver() {
   printf '%s\n' "WWW-Get-IP 0.0.1a written on Dec 13 2025 20:25:03"
   printf '%s\n' "Copyright 2025 Artjom Slepnjov (shellgen@uncensored.citadel.org)"
@@ -43,8 +37,6 @@ _EOF_
 
 exit 1
 }
-
-trap 'cleanup' INT HUP TERM EXIT
 
 IFS="$(printf '\n\t')"
 OLDIFS=${IFS}
@@ -107,11 +99,11 @@ decolorize(){ sed 's/\x1B\[[0-9;]\{1,8\}[A-Za-z]//g';}
 
 filter_ipaddr(){
   sed \
-    -e "/[^0-9.]0.0.0.0[^0-9.]/d" \
-    -e "/  Ip: [0-9]/d" \
-    -e "/  ServerIP: [0-9]/d" \
-    -e "/  X-Server-Ip: [0-9]/d" \
-    -e "/ 127.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}/d"
+    -e '/[^0-9.]0.0.0.0[^0-9.]/d' \
+    -e '/[^0-9.]127.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}[^0-9.]/d' \
+    -e '/  Ip: [0-9]/d' \
+    -e '/  ServerIP: [0-9]/d' \
+    -e '/  X-Server-Ip: [0-9]/d'
 }
 
 loadfile() {
@@ -155,36 +147,32 @@ seturl() {
 }
 
 get_ip(){
+  local IFS=${IFS}
   local XURL=${1:?}
   local UA="curl/7.54.1"  # useragent
+  local ARGS
 
   IFS=","
   set -- "-q,-T,${g_timeout},-SO,-"
-  set -- "${1},--header,'User-Agent: ${UA}'"
-  set -- "${1},--header,'Referer: ${XURL}'"
-  set -- ${@}
+  set -- "${1},--header,User-Agent: ${UA}"
+  set -- "${1},--header,Referer: ${XURL}"
+  ARGS=${@}
+
+  set -- '\(25[0-5]\|2[0-4][0-9]\|[01]\?[0-9][0-9]\?\)' "[/,{}<>\'\";]"
+  set -- "${1}" "${2}" "\(>\|^\|[[:blank:]]\|${2}\)" "\(<\|${2}\|[[:blank:]]\|$\)"
 
   ulimit -d 20000
 
-  wget ${@} -- "${XURL}" >&4 2>&1
+  wget ${ARGS} -- "${XURL}" 2>&1 |
 
-  IFS=${OLDIFS}
+  decolorize | sed "s/&#46;/./g;s/\(&quot;\|,\)/ /g" 2>/dev/null | filter_ipaddr |
 
-  set -- '\(25[0-5]\|2[0-4][0-9]\|[01]\?[0-9][0-9]\?\)' "[[:punct:]]"
-  set -- "${1}" "${2}" "\(>\|^\|[[:blank:]]\|${2}\)" "\(<\|${2}\|[[:blank:]]\|$\)"
+  grep -om1 "${3}${1}\.${1}\.${1}\.${1}${4}" 2>/dev/null |
 
-  cat <&3 | decolorize | sed "s/&#46;/./g;s/\(&quot;\|,\)/ /g" 2>/dev/null | filter_ipaddr |
-
-  grep -om1 "${3}${1}\.${1}\.${1}\.${1}${4}" 2>/dev/null >&4
-
-  IFS=' ' read -r S _ <&3
-	[ -n "${S-}" ] && { set -- ${S}; printf '%s\n' "${1}";}
+  while IFS=' ' read -r S _; do
+    IFS=${OLDIFS}; [ -n "${S-}" ] && { set -- ${S}; printf '%s\n' "${1}";}
+  break; done
 }
-
-
-tmpfile=$(mktemp -t myipXXXXXX)
-exec 3< ${tmpfile}
-exec 4> ${tmpfile}
 
 set -- '7' '0'
 
