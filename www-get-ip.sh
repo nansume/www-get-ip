@@ -14,6 +14,13 @@
 # ---------------------------------------------------------------------------------------------
 set -e -u -f
 
+IFS="$(printf '\n\t') "
+OLDIFS=${IFS}
+verbose="0"
+dry_run="0"
+confarg=
+url=
+
 print_progver() {
   printf '%s\n' "WWW-Get-IP 0.0.1a written on Dec 13 2025 20:25:03"
   printf '%s\n' "Copyright 2025 Artjom Slepnjov (shellgen@uncensored.citadel.org)"
@@ -38,12 +45,9 @@ _EOF_
 exit 1
 }
 
-IFS="$(printf '\n\t')"
-OLDIFS=${IFS}
-
 case $(id -un) in
   'root')
-		ARG=${@}
+		IFS=" " ARG=${@}; IFS=${OLDIFS}
 		while [ x"${1-}" != x ]; do
     	case ${1-} in
   			-u) userarg=${2:?required user}; shift;;
@@ -53,15 +57,11 @@ case $(id -un) in
 		done
 		[ -n "${userarg-}" ] || exit 1
 
-		IFS="${IFS} "; su ${userarg} -c "${0##*/} ${ARG}";
+		su ${userarg} -c "${0##*/} ${ARG}";
 		exit $?
 	;;
 esac
 
-verbose="0"
-dry_run="0"
-confarg=
-url=
 while [ x"${1-}" != x ]; do
   case $1 in
     -f) confarg=${2:?required configfile}
@@ -98,12 +98,13 @@ done
 decolorize(){ sed 's/\x1B\[[0-9;]\{1,8\}[A-Za-z]//g';}
 
 filter_ipaddr(){
+  # TODO: to take away script-tag (is there may be ip address)
   sed \
     -e '/^  Ip: [0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}$/d' \
     -e '/^  ServerIP: [0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}$/d' \
     -e '/^  X-Server-Ip: [0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}$/d' \
     -e 's/<!--[^>]*-->//g' \
-    -e 's|<script>[^>]*</script>||g' \
+    -e 's|__<script>[^>]*</script>__||g' \
     -e 's|<meta name=[^>]*/>||' \
     -e 's/\(^\|[^0-9.]\)0\.0\.0\.0\([^0-9.]\|$\)//' \
     -e 's/\(^\|[^0-9.]\)127\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\([^0-9.]\|$\)//' \
