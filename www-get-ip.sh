@@ -53,7 +53,7 @@ case $(id -un) in
 		done
 		[ -n "${userarg-}" ] || exit 1
 
-		FS="${IFS} "; su ${userarg} -c "${0##*/} $(printf '%s ' ${ARG})";
+		IFS="${IFS} "; su ${userarg} -c "${0##*/} ${ARG}";
 		exit $?
 	;;
 esac
